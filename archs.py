@@ -18,6 +18,10 @@ featurefusion_layers = 1
 activation = 'relu'
 alpha = 0.2
 
+depth = 32
+height = 128
+weight = 128
+
 __all__ = ['MC_UNet', 'LRL']
 
 
