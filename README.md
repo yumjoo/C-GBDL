@@ -1,7 +1,10 @@
 ## Correspondence-based Generative Bayesian Deep Learning forSemi-supervised Volumetric Medical Image Segmentation
 
 A Pytorch implementation of our CMIG 2024 paper "Correspondence-based Generative Bayesian Deep Learning forSemi-supervised Volumetric Medical Image Segmentation".
-Our code framework is based on the open-source code <a href="https://pan.baidu.com/s/1yOGMBZOzlZ5UJ2EGh9y8CQ">download</a> （CVPR 2022）. Thank you for their open-source code and data.
+
+Thanks
+-----
+Our code framework is based on the open-source  <a href="https://pan.baidu.com/s/1yOGMBZOzlZ5UJ2EGh9y8CQ">code</a> （CVPR 2022）. Thank you for their open-source code and data.
 
 
 Build
