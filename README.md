@@ -35,8 +35,8 @@ Plus, please prepare the training and the testing text files. Each file has the 
 ...
 ...
 ```
-i.e., 'train_AtriaSeg.txt' and 'test_AtriaSeg.txt'
-In addition, some path names in train.py need to be modified as necessary.
+i.e., 'train_AtriaSeg.txt' and 'test_AtriaSeg.txt'.
+In addition, some path names in train.py may need to be modified as necessary.
 
 
 Training
