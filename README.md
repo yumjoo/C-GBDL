@@ -35,7 +35,8 @@ Plus, please prepare the training and the testing text files. Each file has the 
 ...
 ...
 ```
-We provide two example files, i.e., 'train_AtriaSeg.txt' and 'test_AtriaSeg.txt'
+i.e., 'train_AtriaSeg.txt' and 'test_AtriaSeg.txt'
+In addition, some path names in train.py need to be modified as necessary.
 
 
 Training
