@@ -30,7 +30,6 @@ class Dataset(torch.utils.data.Dataset):
         self.num_classes = num_classes
         self.num_reference = num_reference
         w = open(self.data_txt)
-        # w = open('./test_kits19.txt')
         # store images and label maps
         for ele in w.readlines():
             id = ele.split(' ')[0]
