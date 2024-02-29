@@ -33,7 +33,7 @@ def parse_args():
 
     parser.add_argument('--name', default='Kits19Seg_4_',
                         help='experiment name')
-    parser.add_argument('--model_save_dir', default='/home/cs22-zhaoyz/zyz_medical2/my_AIA_df_un_kl/users-2/jianfeng/bayes/')
+    parser.add_argument('--model_save_dir', default='/home/cs22-zhaoyz/zyz_medical2/my_AIA_df_un_kl/users-2/bayes/')
     parser.add_argument('--epochs', default=160, type=int, metavar='N',
                         help='number of total epochs to run')
     parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
