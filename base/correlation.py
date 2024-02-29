@@ -1,21 +1,21 @@
 r""" Provides functions that builds/manipulates correlation tensors """
 import copy
 from typing import Optional
-from base.position import *
 import torch.nn.functional as F
 from torch import nn, Tensor
-from base.attention import AiAModule
+import torch
+from base.position import *
 
 device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
 
-class AIAFusionNetwork(nn.Module):
+class SemanticCorrespondence(nn.Module):
 
-    def __init__(self, d_model, batch, num_heads, depth, height, weight, feat_dim, num_featurefusion_layers=1,
-                 dim_feedforward=2048, dropout=0.1, activation="relu", use_AiA=True):
+    def __init__(self, d_model, num_heads, num_featurefusion_layers=1,
+                 dim_feedforward=2048, dropout=0.1, activation="relu"):
 
         super().__init__()
 
-        featurefusion_layer = FeatureFusionLayer(d_model, batch, num_heads, depth, height, weight, feat_dim, dim_feedforward, dropout, activation, use_AiA)
+        featurefusion_layer = FeatureFusionLayer(d_model, num_heads, dim_feedforward, dropout, activation)
         self.encoder = Encoder(featurefusion_layer, num_featurefusion_layers)
 
         self._reset_parameters()
@@ -53,12 +53,11 @@ class AIAFusionNetwork(nn.Module):
 
 class FeatureFusionLayer(nn.Module):
 
-    def __init__(self, d_model, batch, num_heads, depth, height, weight, feat_dim, dim_feedforward=2048, dropout=0.1,
-                 activation="relu", use_AiA=True):
+    def __init__(self, d_model, num_heads, dim_feedforward=2048, dropout=0.1,
+                 activation="relu"):
         super().__init__()
 
-        self.cross_attn = AiAModule(d_model, batch, num_heads, depth, height, weight, feat_dim, dropout=dropout, use_AiA=use_AiA)
-        # self.cross_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
+        self.cross_attn = nn.MultiheadAttention(d_model, num_heads, dropout=dropout)
 
         # Implementation of Feedforward model
         self.linear1 = nn.Linear(d_model, dim_feedforward)
@@ -128,20 +127,14 @@ def _get_clones(module, N):
     return nn.ModuleList([copy.deepcopy(module) for i in range(N)])
 
 
-def build_corr_network(hidden_dim, dropout, batch, nheads, depth, height, weight, feat_dim, dim_feedforward, featurefusion_layers, activation, use_AiA):
-    return AIAFusionNetwork(
+def build_corr_network(hidden_dim, dropout, nheads, dim_feedforward, featurefusion_layers, activation):
+    return SemanticCorrespondence(
         d_model=hidden_dim,
         dropout=dropout,
-        batch=batch,
         num_heads=nheads,
-        depth=depth,
-        height=height,
-        weight=weight,
-        feat_dim=feat_dim,
         dim_feedforward=dim_feedforward,
         num_featurefusion_layers=featurefusion_layers,
         activation=activation,
-        use_AiA=use_AiA
     )
 
 def _get_activation_fn(activation):
