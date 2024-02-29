@@ -5,8 +5,8 @@ from torch import nn
 from torch.nn import init
 import torch.nn.functional as F
 from base.correlation import build_corr_network
-from base.deep_wise_attention import deep_Attention
 from torch.distributions import MultivariateNormal
+
 
 
 position_embedding = 'sine'
@@ -16,12 +16,7 @@ nheads = 4
 dim_feedforward = 128
 featurefusion_layers = 1
 activation = 'relu'
-use_AIA = False
-
-batch = 1
-depth = 32
-height = 128
-weight = 128
+alpha = 0.2
 
 __all__ = ['MC_UNet', 'LRL']
 
@@ -214,15 +209,11 @@ class LRL(nn.Module):
             nn.ReLU(inplace=True)
         )
 
-        self.atten_32_ = build_corr_network(self.nb_filter[2], dropout, batch, nheads, depth, height // 4,
-                                            weight // 4,
-                                            1024,
-                                            self.nb_filter[2] * 2, featurefusion_layers, activation, use_AIA)
+        self.atten_32_ = build_corr_network(self.nb_filter[2], dropout, nheads,
+                                            self.nb_filter[2] * 2, featurefusion_layers, activation)
 
-        self.atten_16_ = build_corr_network(self.nb_filter[3], dropout, batch, nheads, depth, height // 8,
-                                            weight // 8,
-                                            256,
-                                            self.nb_filter[3] * 2, featurefusion_layers, activation, use_AIA)
+        self.atten_16_ = build_corr_network(self.nb_filter[3], dropout, nheads,
+                                            self.nb_filter[3] * 2, featurefusion_layers, activation)
 
         self.conv_up_32 = nn.ConvTranspose3d(self.nb_filter[2], self.nb_filter[2], (2, 3, 3), stride=(2, 1, 1),
                                              padding=(0, 1, 1))
@@ -236,8 +227,6 @@ class LRL(nn.Module):
 
         self.avg_pool_32 = nn.AvgPool3d(kernel_size=(1, height // 4, weight // 4))
         self.avg_pool_16 = nn.AvgPool3d(kernel_size=(1, height // 8, weight // 8))
-        self.deep_fusion_32 = deep_Attention(self.nb_filter[-3], depth)
-        self.deep_fusion_16 = deep_Attention(self.nb_filter[-2], depth)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d) or isinstance(m, nn.Conv3d):
@@ -371,11 +360,6 @@ class LRL(nn.Module):
             f2_0_ = f2_0
             f3_0_ = f3_0
 
-            # f_32_avg = self.avg_pool_32(f2_0).squeeze(-1).squeeze(-1).permute(0, 2, 1)
-            # f_16_avg = self.avg_pool_16(f3_0).squeeze(-1).squeeze(-1).permute(0, 2, 1)
-
-            # f_32_ = self.deep_fusion_32(f_32_avg, f2_0_)
-            # f_16_ = self.deep_fusion_16(f_16_avg, f3_0_)
 
             f_32_ = torch.mean(f2_0_, dim=2, keepdim=True).repeat(1, 1, depth, 1, 1)
             f_16_ = torch.mean(f3_0_, dim=2, keepdim=True).repeat(1, 1, depth, 1, 1)
@@ -478,7 +462,6 @@ class LRL(nn.Module):
                 un_certainty = self.uncertainty_map(output_pseudo)
                 # weight = torch.exp(-un_certainty) / (1 + torch.exp(-sim))
                 sigmoid = nn.Sigmoid()
-                alpha = 0.2
                 weight = torch.exp(-un_certainty)*(sigmoid(-alpha*kl)+0.5)
                 sum_w += weight
                 
@@ -492,19 +475,3 @@ class LRL(nn.Module):
         return x_ori, outputs, mean, covar.view(-1, depth, D, D),
 
 
-if __name__ == '__main__':
-    import torch
-
-
-    def calculate_mean(input_vector):
-        mean_vector = torch.mean(input_vector, dim=2)
-        return mean_vector
-
-
-    # 示例输入向量的尺寸为（B，C，D，W，H）
-    input_vector = torch.randn(2, 3, 4, 5, 6)
-
-    # 计算第二个维度上的均值，得到输出向量尺寸为（B，C，W，H）
-    output_vector = calculate_mean(input_vector)
-
-    print(output_vector.size())  # 输出结果为 torch.Size([2, 3, 5, 6])
