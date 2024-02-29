@@ -27,13 +27,14 @@ ARCH_NAMES = archs.__all__
 LOSS_NAMES = losses.__all__
 LOSS_NAMES.append('BCEWithLogitsLoss')
 
+num_reference = 16  # num_reference should no more than the labeled sample
 
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--name', default='Kits19Seg_4_',
+    parser.add_argument('--name', default='AtriaSeg_16',
                         help='experiment name')
-    parser.add_argument('--model_save_dir', default='/home/cs22-zhaoyz/zyz_medical2/my_AIA_df_un_kl/users-2/bayes/')
+    parser.add_argument('--model_save_dir', default='/home/cs22-zhaoyz/zyz_medical2_git/C-GBDL/bayes/')
     parser.add_argument('--epochs', default=160, type=int, metavar='N',
                         help='number of total epochs to run')
     parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
@@ -61,7 +62,7 @@ def parse_args():
                         help='image depth')
     parser.add_argument('--M', default=1, type=int,
                         help='number of sampling')
-    parser.add_argument('--N_Ref', default=4, type=int,
+    parser.add_argument('--N_Ref', default=num_reference, type=int,
                         help='number of reference')
     # loss
     parser.add_argument('--loss', default='BCEDiceLoss',
@@ -128,7 +129,7 @@ def data_collate(batch):
         if total_num == 0:
             input = torch.from_numpy(info[0]).unsqueeze(0)
             target = torch.from_numpy(info[1]).unsqueeze(0)
-            for i in range(4):
+            for i in range(num_reference):
                 if fixed_input == None:
                     fixed_input = torch.from_numpy(info[5][i]).unsqueeze(0).unsqueeze(0)
                     fixed_target = torch.from_numpy(info[6][i]).unsqueeze(0).unsqueeze(0)
@@ -143,7 +144,7 @@ def data_collate(batch):
         else:
             input = torch.cat((input, torch.from_numpy(info[0]).unsqueeze(0)))
             target = torch.cat((target, torch.from_numpy(info[1]).unsqueeze(0)))
-            for i in range(4):
+            for i in range(num_reference):
                 if fixed_input == None:
                     fixed_input = torch.from_numpy(info[5][i]).unsqueeze(0).unsqueeze(0)
                     fixed_target = torch.from_numpy(info[6][i]).unsqueeze(0).unsqueeze(0)
@@ -173,7 +174,7 @@ def train(config, train_loader, model, model_seg, criterion, optimizer, epoch):
 
     pbar = tqdm(total=len(train_loader))
     for input, target, num_per_p, paths, patient, fixed_imgs, fixed_mask_one_hots in train_loader:
-
+    
         input = input.cuda(non_blocking=True)
         target = target.cuda(non_blocking=True)
         fixed_imgs = fixed_imgs.cuda(non_blocking=True)
